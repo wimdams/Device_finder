@@ -8,4 +8,4 @@ and listens to an UDP response:
 
 	XX:XX:XX:XX:XX:XX is present and my owner is YYYYYY ZZZZZZ
 	
-![Screenshot](doc/images/screenshot.png)
+![Screenshot](doc/img/screenshot.png)
