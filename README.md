@@ -1,6 +1,6 @@
 # Device Finder
 
-Small application written in C++/Qt to send an UDP broadcast (port 6060) 
+Small application written in C++/Qt to send an UDP broadcast (port 64000) 
 
 	Where are you?v1.0
 	
