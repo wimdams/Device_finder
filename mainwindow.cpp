@@ -8,7 +8,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     m_udpSocket = new QUdpSocket(this);
-    m_udpSocket->bind(UDP_PORT, QUdpSocket::ShareAddress);
+    m_udpSocket->bind(QHostAddress::Any, UDP_PORT, QUdpSocket::ShareAddress);
+
     connect(m_udpSocket, &QUdpSocket::readyRead,
             this, &MainWindow::processPendingDatagrams);
 
@@ -19,8 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_timer,&QTimer::timeout, this, &MainWindow::SendRequest);
 
     //Send Request on startup
-    SendRequest();
-    m_timer->start();
+    on_pbRefresh_clicked();
 
     ui->devices->setIconSize(QSize(48,48));
     ui->devices->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -48,8 +48,31 @@ void MainWindow::on_pbRefresh_clicked()
 
 void MainWindow::SendRequest()
 {
+    int broadcasts_send = 0;
+    QUdpSocket udpSocket;
     QByteArray datagram = UDP_REQUEST"v1.0";
-    m_udpSocket->writeDatagram(datagram, QHostAddress::Broadcast, UDP_PORT);
+
+    //Get all the Network Interface Cards of this Computer
+    QList<QNetworkInterface> NICs = QNetworkInterface::allInterfaces();
+    foreach(QNetworkInterface NIC, NICs){
+        //Get all the adresses on this NIC
+        QList<QNetworkAddressEntry> adresses = NIC.addressEntries();
+        foreach(QNetworkAddressEntry adress, adresses){
+            QD << NIC.name() << adress.ip();
+            //If broadcast adress = null => IPv6 (no support for broadcasts)
+            QHostAddress broadc_addr = adress.broadcast();
+            if(!broadc_addr.isNull()){
+                //Send UDP packet
+                udpSocket.writeDatagram(datagram, adress.broadcast(), UDP_PORT);
+                broadcasts_send++;
+            }
+        }
+    }
+    if(broadcasts_send == 0){
+        ui->pteLog->appendPlainText("Warning: no Network Interface Cards or valid IP adresses found (no broadcasts send)");
+    }else{
+        ui->pteLog->appendPlainText(tr("Info: %1 broadcasts send").arg(broadcasts_send));
+    }
 }
 
 void MainWindow::processPendingDatagrams()
@@ -77,7 +100,7 @@ void MainWindow::processDatagram(QString msg,QString host)
         return; //we are done here...
     }
 
-    //
+    //RegEx for MAC adress
     QRegExp macRegExp("([0-9A-F]{2})[:-]([0-9A-F]{2})[:-]([0-9A-F]{2})[:-]([0-9A-F]{2})[:-]([0-9A-F]{2})[:-]([0-9A-F]{2})");
     if(macRegExp.indexIn(msg.toUpper(), 0) != -1){
         QString foundOUI = macRegExp.cap(1) % macRegExp.cap(2) % macRegExp.cap(3);
@@ -157,4 +180,10 @@ void MainWindow::on_devices_customContextMenuRequested(const QPoint &pos)
             on_devices_itemDoubleClicked(item);
         }
     }
+}
+
+void MainWindow::on_actionAbout_triggered()
+{
+    About ab(this);
+    ab.exec();
 }

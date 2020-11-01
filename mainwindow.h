@@ -5,6 +5,9 @@
 #include <QtNetwork>
 #include <QtWidgets>
 #define QD qDebug() << __FILE__ << __LINE__
+
+#include "about.h"
+
 // UDP protocol:
 //REQ= Where are you?v1.0
 //ANS= XX:XX:XX:XX:XX:XX is present and my owner is YYYYYY ZZZZZZ
@@ -31,6 +34,8 @@ private slots:
     void on_pbRefresh_clicked();
     void on_devices_itemDoubleClicked(QListWidgetItem *item);
     void on_devices_customContextMenuRequested(const QPoint &pos);
+
+    void on_actionAbout_triggered();
 
 private:
     Ui::MainWindow *ui;
