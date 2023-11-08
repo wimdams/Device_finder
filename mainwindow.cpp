@@ -82,7 +82,7 @@ void MainWindow::processPendingDatagrams()
     while (m_udpSocket->hasPendingDatagrams()) {
         datagram.resize(int(m_udpSocket->pendingDatagramSize()));
         m_udpSocket->readDatagram(datagram.data(), datagram.size(), &host);
-        QString msg = QString(datagram).remove(QRegExp("\\r|\\n"));
+        QString msg = QString(datagram).remove(QRegularExpression("\\r|\\n"));
         processDatagram(msg, host.toString());
     }
 }
@@ -101,10 +101,11 @@ void MainWindow::processDatagram(QString msg,QString host)
     }
 
     //RegEx for MAC adress
-    QRegExp macRegExp("([0-9A-F]{2})[:-]([0-9A-F]{2})[:-]([0-9A-F]{2})[:-]([0-9A-F]{2})[:-]([0-9A-F]{2})[:-]([0-9A-F]{2})");
-    if(macRegExp.indexIn(msg.toUpper(), 0) != -1){
-        QString foundOUI = macRegExp.cap(1) % macRegExp.cap(2) % macRegExp.cap(3);
-        QString foundMAC = macRegExp.cap(0);
+    QRegularExpression macRegExp("([0-9A-F]{2})[:-]([0-9A-F]{2})[:-]([0-9A-F]{2})[:-]([0-9A-F]{2})[:-]([0-9A-F]{2})[:-]([0-9A-F]{2})");
+    QRegularExpressionMatch match = macRegExp.match(msg.toUpper());
+    if(match.hasMatch()){
+        QString foundOUI = match.captured(1) % match.captured(2) % match.captured(3);
+        QString foundMAC = match.captured(0);
         QString imgName = ":/res/unknown.png";
         /*grep STMicro oui.txt | grep base
         0080E1     (base 16)            STMicroelectronics SRL
